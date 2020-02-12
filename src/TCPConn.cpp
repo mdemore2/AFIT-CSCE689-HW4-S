@@ -92,6 +92,7 @@ bool TCPConn::accept(SocketFD &server) {
 
    // Set the state as waiting for the authorization packet
    _status = s_connected;
+   _connected = true;
    return results;
 }
 
@@ -369,7 +370,6 @@ void TCPConn::awaitAck() {
 
  
       disconnect();
-      _status = s_none;
    }
 }
 
