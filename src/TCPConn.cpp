@@ -237,7 +237,7 @@ void TCPConn::sendSID() {
    wrapCmd(buf, c_sid, c_endsid);
    sendData(buf);
 
-   _status = s_datatx; 
+   _status = s_handshake; 
 }
 
 /**********************************************************************************************
@@ -266,12 +266,17 @@ void TCPConn::waitForSID() {
       std::string node(buf.begin(), buf.end());
       setNodeID(node.c_str());
 
-      // Send our Node ID
+      //encrypt and return SID
+      std::string eSID = encryptData(buf);
+      wrapCmd(buf,c_auth.begin(),c_auth.end());
+      sendData(buf);
+
+      // Send our unencrypted Node ID
       buf.assign(_svr_id.begin(), _svr_id.end());
       wrapCmd(buf, c_sid, c_endsid);
       sendData(buf);
 
-      _status = s_datarx;
+      _status = s_authenticate;
    }
 }
 
@@ -637,8 +642,11 @@ const char *TCPConn::getIPAddrStr(std::string &buf) {
 
 void TCPConn::waitForAuthentication(){
 
+   //verify encryption of OUR SID
+   _status = s_datarx;
 }
 
 void TCPConn::initiateHandshake(){
-   
+   //recieve and return encrypted SID
+   _status = s_datatx;  
 }

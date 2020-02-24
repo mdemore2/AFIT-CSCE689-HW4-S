@@ -77,7 +77,7 @@ protected:
    void awaitAck();
 
    void waitForAuthentication();
-   void initiaiteHandshake();
+   void initiateHandshake();
 
    // Looks for commands in the data stream
    std::vector<uint8_t>::iterator findCmd(std::vector<uint8_t> &buf,
