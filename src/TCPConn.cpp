@@ -181,6 +181,19 @@ void TCPConn::handleConnection() {
          case s_connected:
             waitForSID();
             break;
+         
+         //encrypt sid and reply with encrypted sid and our unencrypted sid
+         //wait for reply of our encrypted sid, now we are authenticated
+
+         //Server: Wait for return of our encrypted sid
+         case s_authenticate:
+            waitForAuthentication();
+            break;
+         
+         //Client: verify return of encrypted SID, reply with encryption of server SID
+         case s_handshake:
+            initiateHandshake();
+            break;
    
          // Client: connecting user - replicate data
          case s_datatx:
@@ -622,3 +635,10 @@ const char *TCPConn::getIPAddrStr(std::string &buf) {
    return buf.c_str();
 }
 
+void TCPConn::waitForAuthentication(){
+
+}
+
+void TCPConn::initiateHandshake(){
+   
+}

@@ -16,7 +16,7 @@ public:
    ~TCPConn();
 
    // The current status of the connection
-   enum statustype { s_none, s_connecting, s_connected, s_datatx, s_datarx, s_waitack, s_hasdata };
+   enum statustype { s_none, s_connecting, s_connected, s_datatx, s_datarx, s_waitack, s_hasdata, s_authenticate, s_handshake };
 
    statustype getStatus() { return _status; };
 
@@ -75,6 +75,9 @@ protected:
    void transmitData();
    void waitForData();
    void awaitAck();
+
+   void waitForAuthentication();
+   void initiaiteHandshake();
 
    // Looks for commands in the data stream
    std::vector<uint8_t>::iterator findCmd(std::vector<uint8_t> &buf,
