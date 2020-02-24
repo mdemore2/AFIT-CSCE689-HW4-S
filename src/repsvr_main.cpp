@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /****************************************************************************************
  * repsvr_main - A replication server that receives drone information from an "antenna" and
  *               replicates that information to other servers. The antenna is simulated by
@@ -200,7 +199,6 @@ int main(int argc, char *argv[]) {
    
    return 0;
 }
-=======
 /****************************************************************************************
  * repsvr_main - A replication server that receives drone information from an "antenna" and
  *               replicates that information to other servers. The antenna is simulated by
@@ -402,4 +400,3 @@ int main(int argc, char *argv[]) {
    
    return 0;
 }
->>>>>>> 5023b16db17935219a12913507b75b3a15e96e1f

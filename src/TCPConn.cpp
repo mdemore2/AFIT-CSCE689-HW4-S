@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #include <stdexcept>
 #include <strings.h>
 #include <unistd.h>
@@ -643,7 +642,6 @@ void TCPConn::waitForAuthentication(){
 void TCPConn::initiateHandshake(){
    
 }
-=======
 #include <stdexcept>
 #include <strings.h>
 #include <unistd.h>
@@ -1268,4 +1266,3 @@ const char *TCPConn::getIPAddrStr(std::string &buf) {
    return buf.c_str();
 }
 
->>>>>>> 5023b16db17935219a12913507b75b3a15e96e1f

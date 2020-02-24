@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #include <iostream>
 #include <exception>
 #include "ReplServer.h"
@@ -224,7 +223,6 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
 void ReplServer::shutdown() {
    _shutdown = true;
 }
-=======
 #include <iostream>
 #include <exception>
 #include "ReplServer.h"
@@ -452,4 +450,3 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
 void ReplServer::shutdown() {
    _shutdown = true;
 }
->>>>>>> 5023b16db17935219a12913507b75b3a15e96e1f
