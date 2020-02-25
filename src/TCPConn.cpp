@@ -271,17 +271,21 @@ void TCPConn::waitForSID() {
       //check if client sid matches server sid for reflection attack
       if(node == server)
       {
+         std::stringstream msg;
+         msg << "Passed SID matches Server SID. Reflection Attack Thwarted.";
+         _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
 
       //encrypt and return SID
       encryptData(cmd);
       wrapCmd(cmd,c_auth,c_endauth);
-      sendData(cmd);
+      //sendData(cmd);
 
       // Send our unencrypted Node ID
-      cmd.assign(_svr_id.begin(), _svr_id.end());
-      wrapCmd(cmd, c_sid, c_endsid);
+      buf.assign(_svr_id.begin(), _svr_id.end());
+      wrapCmd(buf, c_sid, c_endsid);
+      cmd.insert(cmd.end(),buf.begin(),buf.end());
       sendData(cmd);
 
       _status = s_authenticate;
@@ -665,7 +669,7 @@ void TCPConn::waitForAuthentication(){
       cmd = getCmdData(buf, c_auth, c_endauth);
       if (cmd.size() < 1) {
          std::stringstream msg;
-         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         msg << "AUTH string from connecting client invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
@@ -674,6 +678,9 @@ void TCPConn::waitForAuthentication(){
       std::string decryptedSID(cmd.begin(),cmd.end());
       if(decryptedSID != _svr_id)
       {
+         std::stringstream msg;
+         msg << "Encrypted SID does not match. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
 
@@ -696,7 +703,7 @@ void TCPConn::initiateHandshake(){
       cmd = getCmdData(buf, c_auth, c_endauth);
       if (cmd.size() < 1) {
          std::stringstream msg;
-         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         msg << "AUTH string from connecting client invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
@@ -704,7 +711,10 @@ void TCPConn::initiateHandshake(){
       decryptData(cmd);
       std::string decryptedSID(cmd.begin(),cmd.end());
       if(decryptedSID != _svr_id)
-      {
+      {  
+         std::stringstream msg;
+         msg << "Encrypted SID does not match. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
 
@@ -724,6 +734,9 @@ void TCPConn::initiateHandshake(){
       //check if client sid matches server sid for reflection attack
       if(node == server)
       {
+         std::stringstream msg;
+         msg << "Passed SID matches Server SID. Reflection Attack Thwarted.";
+         _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
 
