@@ -256,9 +256,11 @@ void TCPConn::waitForSID() {
          return;
 
       cmd = getCmdData(buf, c_sid, c_endsid);
+      std::string command(cmd.begin(),cmd.end());
       if (cmd.size() < 1) {
          std::stringstream msg;
-         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         msg << "IN: waitForSID CMD: " << command;
+         //msg << "SID string from connecting client invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
@@ -272,7 +274,7 @@ void TCPConn::waitForSID() {
       if(node == server)
       {
          std::stringstream msg;
-         msg << "Passed SID matches Server SID. Reflection Attack Thwarted.";
+         msg << "IN: waitForSID. Passed SID matches Server SID. Reflection Attack Thwarted.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
@@ -280,13 +282,13 @@ void TCPConn::waitForSID() {
       //encrypt and return SID
       encryptData(cmd);
       wrapCmd(cmd,c_auth,c_endauth);
-      //sendData(cmd);
+      sendData(cmd);
 
       // Send our unencrypted Node ID
       buf.assign(_svr_id.begin(), _svr_id.end());
       wrapCmd(buf, c_sid, c_endsid);
-      cmd.insert(cmd.end(),buf.begin(),buf.end());
-      sendData(cmd);
+      //cmd.insert(cmd.end(),buf.begin(),buf.end());
+      sendData(buf);
 
       _status = s_authenticate;
    }
@@ -527,10 +529,10 @@ bool TCPConn::hasCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &cmd) {
 
 std::vector<uint8_t> TCPConn::getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd, 
                                                     std::vector<uint8_t> &endcmd) {
-   std::vector<uint8_t> temp, retval = buf;
+   std::vector<uint8_t> temp = buf;
    auto start = findCmd(temp, startcmd);
    auto end = findCmd(temp, endcmd);
-   retval.assign(0,0);
+   std::vector<uint8_t> retval;
 
    if ((start == temp.end()) || (end == temp.end()) || (start == end))
       return retval;
@@ -667,9 +669,10 @@ void TCPConn::waitForAuthentication(){
 
      //verify encryption of our sid
       cmd = getCmdData(buf, c_auth, c_endauth);
+      std::string command(cmd.begin(),cmd.end());
       if (cmd.size() < 1) {
          std::stringstream msg;
-         msg << "AUTH string from connecting client invalid format. Cannot authenticate.";
+         msg << "IN: waitForAuthentication. CMD: " << command << " AUTH string from connecting client invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
@@ -679,7 +682,7 @@ void TCPConn::waitForAuthentication(){
       if(decryptedSID != _svr_id)
       {
          std::stringstream msg;
-         msg << "Encrypted SID does not match. Cannot authenticate.";
+         msg << "IN: waitForAuthentication. SID: " << decryptedSID << " Encrypted SID does not match. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
@@ -701,9 +704,10 @@ void TCPConn::initiateHandshake(){
 
       //verify encryption of our sid
       cmd = getCmdData(buf, c_auth, c_endauth);
+      std::string command(cmd.begin(),cmd.end());
       if (cmd.size() < 1) {
          std::stringstream msg;
-         msg << "AUTH string from connecting client invalid format. Cannot authenticate.";
+         msg << "IN: initiateHandshake. CMD: " << command << " AUTH string from connecting client invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
@@ -713,16 +717,17 @@ void TCPConn::initiateHandshake(){
       if(decryptedSID != _svr_id)
       {  
          std::stringstream msg;
-         msg << "Encrypted SID does not match. Cannot authenticate.";
+         msg << "IN: initiateHandshake. SID: " << decryptedSID << " Encrypted SID does not match. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
 
       //get their sid, encrypt and reply
       cmd = getCmdData(buf, c_sid, c_endsid);
+      command = std::string(cmd.begin(),cmd.end());
       if (cmd.size() < 1) {
          std::stringstream msg;
-         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         msg << "IN: initiateHandshake. CMD: " << command << " SID string from server invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
@@ -735,7 +740,7 @@ void TCPConn::initiateHandshake(){
       if(node == server)
       {
          std::stringstream msg;
-         msg << "Passed SID matches Server SID. Reflection Attack Thwarted.";
+         msg << "IN: initiateHandshake. Passed SID matches Server SID. Reflection Attack Thwarted.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
       }
