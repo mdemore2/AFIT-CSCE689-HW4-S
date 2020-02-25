@@ -250,12 +250,13 @@ void TCPConn::waitForSID() {
 
    // If data on the socket, should be our Auth string from our host server
    if (_connfd.hasData()) {
-      std::vector<uint8_t> buf;
+      std::vector<uint8_t> buf, cmd;
 
       if (!getData(buf))
          return;
 
-      if (!getCmdData(buf, c_sid, c_endsid)) {
+      cmd = getCmdData(buf, c_sid, c_endsid);
+      if (cmd.size() < 1) {
          std::stringstream msg;
          msg << "SID string from connecting client invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
@@ -263,18 +264,25 @@ void TCPConn::waitForSID() {
          return;
       }
 
-      std::string node(buf.begin(), buf.end());
+      std::string node(cmd.begin(), cmd.end());
       setNodeID(node.c_str());
 
+      std::string server(_svr_id.begin(), _svr_id.end());
+      //check if client sid matches server sid for reflection attack
+      if(node == server)
+      {
+         disconnect();
+      }
+
       //encrypt and return SID
-      std::string eSID = encryptData(buf);
-      wrapCmd(buf,c_auth.begin(),c_auth.end());
-      sendData(buf);
+      encryptData(cmd);
+      wrapCmd(cmd,c_auth,c_endauth);
+      sendData(cmd);
 
       // Send our unencrypted Node ID
-      buf.assign(_svr_id.begin(), _svr_id.end());
-      wrapCmd(buf, c_sid, c_endsid);
-      sendData(buf);
+      cmd.assign(_svr_id.begin(), _svr_id.end());
+      wrapCmd(cmd, c_sid, c_endsid);
+      sendData(cmd);
 
       _status = s_authenticate;
    }
@@ -291,12 +299,13 @@ void TCPConn::transmitData() {
 
    // If data on the socket, should be our Auth string from our host server
    if (_connfd.hasData()) {
-      std::vector<uint8_t> buf;
+      std::vector<uint8_t> buf, cmd;
 
       if (!getData(buf))
          return;
 
-      if (!getCmdData(buf, c_sid, c_endsid)) {
+      cmd = getCmdData(buf, c_sid, c_endsid);
+      if (cmd.size() < 1) {
          std::stringstream msg;
          msg << "SID string from connected server invalid format. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
@@ -304,7 +313,7 @@ void TCPConn::transmitData() {
          return;
       }
 
-      std::string node(buf.begin(), buf.end());
+      std::string node(cmd.begin(), cmd.end());
       setNodeID(node.c_str());
 
       // Send the replication data
@@ -331,12 +340,13 @@ void TCPConn::waitForData() {
 
    // If data on the socket, should be replication data
    if (_connfd.hasData()) {
-      std::vector<uint8_t> buf;
+      std::vector<uint8_t> buf,cmd;
 
       if (!getData(buf))
          return;
 
-      if (!getCmdData(buf, c_rep, c_endrep)) {
+      cmd = getCmdData(buf, c_rep, c_endrep);
+      if (cmd.size() < 1) {
          std::stringstream msg;
          msg << "Replication data possibly corrupted from" << getNodeID() << "\n";
          _server_log.writeLog(msg.str().c_str());
@@ -345,7 +355,7 @@ void TCPConn::waitForData() {
       }
 
       // Got the data, save it
-      _inputbuf = buf;
+      _inputbuf = cmd;
       _data_ready = true;
 
       // Send the acknowledgement and disconnect
@@ -507,21 +517,23 @@ bool TCPConn::hasCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &cmd) {
  *            startcmd - the command at the beginning of the data sought
  *            endcmd - the command at the end of the data sought
  *
- *    Returns: true if both start and end commands were found, false otherwisei
+ *    Returns: cmd if found, empty vector otherwise
  *
  **********************************************************************************************/
 
-bool TCPConn::getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd, 
+std::vector<uint8_t> TCPConn::getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd, 
                                                     std::vector<uint8_t> &endcmd) {
-   std::vector<uint8_t> temp = buf;
+   std::vector<uint8_t> temp, retval = buf;
    auto start = findCmd(temp, startcmd);
    auto end = findCmd(temp, endcmd);
+   retval.assign(0,0);
 
    if ((start == temp.end()) || (end == temp.end()) || (start == end))
-      return false;
+      return retval;
 
-   buf.assign(start + startcmd.size(), end);
-   return true;
+   //buf.assign(start + startcmd.size(), end);
+   retval.assign(start + startcmd.size(),end);
+   return retval;
 }
 
 /**********************************************************************************************
@@ -641,12 +653,86 @@ const char *TCPConn::getIPAddrStr(std::string &buf) {
 }
 
 void TCPConn::waitForAuthentication(){
-
    //verify encryption of OUR SID
-   _status = s_datarx;
+
+   if (_connfd.hasData()) {
+      std::vector<uint8_t> buf, cmd;
+
+      if (!getData(buf))
+         return;
+
+     //verify encryption of our sid
+      cmd = getCmdData(buf, c_auth, c_endauth);
+      if (cmd.size() < 1) {
+         std::stringstream msg;
+         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+      decryptData(cmd);
+      std::string decryptedSID(cmd.begin(),cmd.end());
+      if(decryptedSID != _svr_id)
+      {
+         disconnect();
+      }
+
+      _status = s_datarx; 
+   }
+   
 }
 
 void TCPConn::initiateHandshake(){
-   //recieve and return encrypted SID
-   _status = s_datatx;  
+   //recieve and verify our sid
+   // send encrypted SID
+
+   if (_connfd.hasData()) {
+      std::vector<uint8_t> buf, cmd;
+
+      if (!getData(buf))
+         return;
+
+      //verify encryption of our sid
+      cmd = getCmdData(buf, c_auth, c_endauth);
+      if (cmd.size() < 1) {
+         std::stringstream msg;
+         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+      decryptData(cmd);
+      std::string decryptedSID(cmd.begin(),cmd.end());
+      if(decryptedSID != _svr_id)
+      {
+         disconnect();
+      }
+
+      //get their sid, encrypt and reply
+      cmd = getCmdData(buf, c_sid, c_endsid);
+      if (cmd.size() < 1) {
+         std::stringstream msg;
+         msg << "SID string from connecting client invalid format. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+
+      std::string node(cmd.begin(), cmd.end());
+
+      std::string server(_svr_id.begin(), _svr_id.end());
+      //check if client sid matches server sid for reflection attack
+      if(node == server)
+      {
+         disconnect();
+      }
+
+      //encrypt and return SID
+      encryptData(cmd);
+      wrapCmd(cmd,c_auth,c_endauth);
+      sendData(cmd);
+
+      _status = s_datatx;  
+   }
 }
+   

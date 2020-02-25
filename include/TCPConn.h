@@ -85,7 +85,7 @@ protected:
    bool hasCmd(std::vector<uint8_t> &buf, std::vector<uint8_t> &cmd);
 
    // Gets the data between startcmd and endcmd strings and places in buf
-   bool getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd,
+   std::vector<uint8_t> getCmdData(std::vector<uint8_t> &buf, std::vector<uint8_t> &startcmd,
                                                     std::vector<uint8_t> &endcmd);
 
    // Places startcmd and endcmd strings around the data in buf and returns it in buf
