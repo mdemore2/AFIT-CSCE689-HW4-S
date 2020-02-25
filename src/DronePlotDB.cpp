@@ -201,9 +201,6 @@ void DronePlot::clrFlags(unsigned short flags) {
    _flags &= ~flags;
 }
 
-/*bool DronePlot::isFlagSet(unsigned short flags) {
-   return (bool) _flags & flags;
-}*/
 bool DronePlot::isFlagSet(unsigned short flags) {
    return (bool) (_flags & flags);
 }
@@ -452,22 +449,19 @@ void DronePlotDB::erase(unsigned int i) {
  *    Note: this locks the mutex and may block if it is already locked.
  *
  *****************************************************************************************/
-/*std::list<DronePlot>::iterator DronePlotDB::erase(std::list<DronePlot>::iterator dptr) {
+
+std::list<DronePlot>::iterator DronePlotDB::erase(std::list<DronePlot>::iterator dptr) {
    // First lock the mutex (blocking)
    pthread_mutex_lock(&_mutex);
 
-   return _dbdata.erase(dptr);
+   auto retptr = _dbdata.erase(dptr);
 
    // Unlock the mutex before we exit
    pthread_mutex_unlock(&_mutex);
 
-}*/
-std::list<DronePlot>::iterator DronePlotDB::erase(std::list<DronePlot>::iterator dptr) {
-   pthread_mutex_lock(&_mutex);
-   auto it = _dbdata.erase(dptr);
-   pthread_mutex_unlock(&_mutex);
-   return it;
+   return retptr;
 }
+
 
 // Removes all of a particular node (not for student use)
 void DronePlotDB::removeNodeID(unsigned int node_id) {
