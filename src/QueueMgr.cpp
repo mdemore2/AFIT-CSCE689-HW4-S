@@ -82,6 +82,10 @@ int QueueMgr::loadServerList(const char *filename) {
       
       _server_list.push_back(std::tuple<std::string, unsigned long, 
                                              unsigned long>(svrid, ipaddr.s_addr, port));
+      
+      _leader_order.push(std::tuple<std::string, unsigned long, 
+                                             unsigned long>(svrid, ipaddr.s_addr, port));
+
       count++;     
    }
    return count;

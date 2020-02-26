@@ -80,7 +80,9 @@ private:
    // The queue list
    std::queue<queue_element> _queue;
 
-   std::vector<std::tuple<std::string, unsigned long, unsigned short>> _server_list;  
+   std::vector<std::tuple<std::string, unsigned long, unsigned short>> _server_list;
+
+   std::priority_queue<std::tuple<std::string, unsigned long, unsigned short>> _leader_order;  
 };
 
 
