@@ -108,6 +108,10 @@ void ReplServer::replicate() {
          addReplDronePlots(data);         
       }       
 
+      //sort through database, check for skew and duplicates here
+      _plotdb;
+      _queue;
+
       usleep(1000);
    }   
 }
