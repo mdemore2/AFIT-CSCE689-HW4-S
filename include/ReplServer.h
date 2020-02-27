@@ -63,6 +63,8 @@ private:
    // Used to bind the server
    std::string _ip_addr;
    unsigned short _port;
+
+   std::map _skew;
 };
 
 

@@ -111,16 +111,27 @@ void ReplServer::replicate() {
 
       //sort through database, check for skew and duplicates here
       _plotdb.sortByTime();
+
       auto leader = _queue.getLeader();
       auto leader_id = std::get<0>(leader);
 
       for(auto i = _plotdb.begin(); i != _plotdb.end(); i++)
       {
+         if(std::get<0>(leader) == ("ds" + std::to_string(i->node_id)))
+         {
+           i->setFlags(DBFLAG_LEADER);
+         }
+
          for(auto j = _plotdb.begin(); j != _plotdb.end(); j++)
          {
+            if(std::get<0>(leader) == ("ds" + std::to_string(j->node_id)))
+            {
+               j->setFlags(DBFLAG_LEADER);
+            }
+            
             if(i->timestamp == j->timestamp)
             {
-              if(std::get<0>(leader) == ("ds" + std::to_string(i->node_id)))
+              if(i->isFlagSet(DBFLAG_LEADER))
               {
                  _plotdb.erase(j);
               }
@@ -133,7 +144,24 @@ void ReplServer::replicate() {
 
             if((i->latitude == j->latitude) && (i->longitude == j->longitude))
             {
-               
+               if(i->isFlagSet(DBFLAG_LEADER))
+               {
+                  _skew.emplace(j->node_id,(i->timestamp - j->timestamp));
+                  j->setFlags(DBFLAG_SKEWED);
+               }
+               else if(j->isFlagSet(DBFLAG_LEADER))
+               {
+                  _skew.emplace(i->node_id,(j->timestamp - i->timestamp));
+                  i->setFlags(DBFLAG_SKEWED);
+               }
+               else if(_skew.find(i->node_id) != _skew.end())
+               {
+                  _skew.emplace(j->node_id,((_skew(i->node_id) + i->timestamp) - j->timestamp);
+               }
+               else if(_skew.find(j->node_id) != _skew.end())
+               {
+                  _skew.emplace(i->node_id,((_skew(j->node_id) + j->timestamp) - i->timestamp);
+               }
             }
          }
       }
