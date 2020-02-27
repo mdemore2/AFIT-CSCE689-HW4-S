@@ -142,6 +142,8 @@ void ReplServer::replicate() {
               
             }
 
+            //check for skew BEFORE checking for matching time
+
             if((i->latitude == j->latitude) && (i->longitude == j->longitude))
             {
                if(i->isFlagSet(DBFLAG_LEADER))
