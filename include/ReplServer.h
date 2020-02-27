@@ -17,7 +17,7 @@
 class ReplServer 
 {
 public:
-   ReplServer(DronePlotDB &plotdb, const char *ip_addr, unsigned short port,
+   ReplServer(DronePlotDB &plotdb, const char *ip_addr, unsigned short port, int offset,
                               float _time_mult = 1.0, unsigned int verbosity = 1);
    ReplServer(DronePlotDB &plotdb, float _time_mult = 1.0);
    virtual ~ReplServer();
@@ -63,8 +63,6 @@ private:
    // Used to bind the server
    std::string _ip_addr;
    unsigned short _port;
-
-   std::map _skew;
 };
 
 

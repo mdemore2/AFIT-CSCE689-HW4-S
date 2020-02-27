@@ -30,6 +30,8 @@ public:
    // Are we in the process of exiting the simulation?
    bool isExiting() { return _exiting; };
 
+   int getOffset() { return _time_offset; };
+
 private:
    
    double getAdjustedTime();
