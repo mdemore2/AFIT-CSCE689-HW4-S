@@ -317,3 +317,7 @@ void QueueMgr::launchDataConn(const char *sid, std::vector<uint8_t> &data) {
    _connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
 }
 
+std::tuple<std::string, unsigned long, unsigned short> QueueMgr::getLeader()
+{
+   return _leader_order.top();
+}

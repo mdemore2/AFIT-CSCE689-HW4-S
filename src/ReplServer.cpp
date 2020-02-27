@@ -1,4 +1,5 @@
 #include <iostream>
+#include <tuple>
 #include <exception>
 #include "ReplServer.h"
 
@@ -109,8 +110,33 @@ void ReplServer::replicate() {
       }       
 
       //sort through database, check for skew and duplicates here
-      _plotdb;
-      _queue;
+      _plotdb.sortByTime();
+      auto leader = _queue.getLeader();
+      auto leader_id = std::get<0>(leader);
+
+      for(auto i = _plotdb.begin(); i != _plotdb.end(); i++)
+      {
+         for(auto j = _plotdb.begin(); j != _plotdb.end(); j++)
+         {
+            if(i->timestamp == j->timestamp)
+            {
+              if(std::get<0>(leader) == ("ds" + std::to_string(i->node_id)))
+              {
+                 _plotdb.erase(j);
+              }
+              else
+              {
+                 _plotdb.erase(i);
+              }
+              
+            }
+
+            if((i->latitude == j->latitude) && (i->longitude == j->longitude))
+            {
+               
+            }
+         }
+      }
 
       usleep(1000);
    }   

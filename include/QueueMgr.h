@@ -55,6 +55,9 @@ public:
    // Overloaded to prevent this function from being used
    virtual void runServer();
 
+   //return leader details
+   std::tuple<std::string, unsigned long, unsigned short> getLeader();
+
 private:
 
    // Launches a connection to the other server from queue data
