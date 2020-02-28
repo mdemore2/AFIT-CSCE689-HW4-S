@@ -114,6 +114,9 @@ void ReplServer::replicate() {
       //sort through database, check for skew and duplicates here
       _plotdb.sortByTime();
 
+      //checkSkew();
+      //correctSkew();
+      //deduplicate();
       auto leader = _queue.getLeader();
       auto leader_id = std::get<0>(leader);
 
