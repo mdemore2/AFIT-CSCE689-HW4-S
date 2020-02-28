@@ -29,6 +29,10 @@ public:
    // Call this to shutdown the loop 
    void shutdown();
 
+   bool checkSkew();
+   void correctSkew();
+   bool deduplicate();
+
    // An adjusted time that accounts for "time_mult", which speeds up the clock. Any
    // attempts to check "simulator time" should use this function
    time_t getAdjustedTime();

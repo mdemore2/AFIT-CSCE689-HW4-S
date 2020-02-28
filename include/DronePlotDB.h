@@ -13,7 +13,7 @@
 // create a new one up to 0x128 
 #define DBFLAG_NEW      0x1   // Was newly added to the database
 #define DBFLAG_SYNCD    0x2   // Has been sync'd
-#define DBFLAG_SKEWED    0x4   // Skew has been calculated
+#define DBFLAG_DUPE    0x4   // Skew has been calculated
 #define DBFLAG_LEADER    0x8   // Is time coordinator
 #define DBFLAG_USER3    0x16  // Change as needed
 #define DBFLAG_USER4    0x32

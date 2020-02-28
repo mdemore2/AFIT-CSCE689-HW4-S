@@ -56,7 +56,7 @@ public:
    virtual void runServer();
 
    //return leader details
-   std::tuple<std::string, unsigned long, unsigned short> getLeader();
+   std::vector<std::string> getLeader();
 
 private:
 
@@ -85,7 +85,7 @@ private:
 
    std::vector<std::tuple<std::string, unsigned long, unsigned short>> _server_list;
 
-   std::priority_queue<std::tuple<std::string, unsigned long, unsigned short>> _leader_order;  
+   std::vector<std::string> _leader_order;  
 };
 
 

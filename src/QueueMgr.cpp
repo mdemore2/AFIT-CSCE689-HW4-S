@@ -49,6 +49,8 @@ int QueueMgr::loadServerList(const char *filename) {
    std::ifstream sfile;
    unsigned int count = 0;
 
+   std::priority_queue<std::tuple<std::string, unsigned long, unsigned short>> sortServers;
+
    sfile.open(filename, std::ifstream::in);
    if (!sfile.is_open())
       return -1;
@@ -83,11 +85,21 @@ int QueueMgr::loadServerList(const char *filename) {
       _server_list.push_back(std::tuple<std::string, unsigned long, 
                                              unsigned long>(svrid, ipaddr.s_addr, port));
       
-      _leader_order.push(std::tuple<std::string, unsigned long, 
+      sortServers.push(std::tuple<std::string, unsigned long, 
                                              unsigned long>(svrid, ipaddr.s_addr, port));
 
       count++;     
    }
+   
+   auto current = std::get<0>(sortServers.top());
+   sortServers.pop();
+   while(!sortServers.empty())
+   {
+      _leader_order.push_back(current);
+      current = std::get<0>(sortServers.top());
+      sortServers.pop();
+   }
+
    return count;
 }
 
@@ -317,7 +329,7 @@ void QueueMgr::launchDataConn(const char *sid, std::vector<uint8_t> &data) {
    _connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
 }
 
-std::tuple<std::string, unsigned long, unsigned short> QueueMgr::getLeader()
-{
-   return _leader_order.top();
+std::vector<std::string> QueueMgr::getLeader(){
+
+   return _leader_order;
 }
