@@ -160,11 +160,11 @@ void ReplServer::replicate() {
                }
                else if(_skew.find(i->node_id) != _skew.end())
                {
-                  _skew.emplace(j->node_id,((_skew(i->node_id) + i->timestamp) - j->timestamp);
+                  _skew.emplace(j->node_id,((_skew[i->node_id] + i->timestamp) - j->timestamp));
                }
                else if(_skew.find(j->node_id) != _skew.end())
                {
-                  _skew.emplace(i->node_id,((_skew(j->node_id) + j->timestamp) - i->timestamp);
+                  _skew.emplace(i->node_id,((_skew[j->node_id] + j->timestamp) - i->timestamp));
                }
             }
          }
