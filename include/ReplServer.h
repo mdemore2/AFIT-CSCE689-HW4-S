@@ -29,9 +29,9 @@ public:
    // Call this to shutdown the loop 
    void shutdown();
 
-   bool checkSkew();
+   bool checkSkew(DronePlot dp);
    void correctSkew();
-   bool deduplicate();
+   void deduplicate();
 
    // An adjusted time that accounts for "time_mult", which speeds up the clock. Any
    // attempts to check "simulator time" should use this function
