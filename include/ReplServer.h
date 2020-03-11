@@ -29,9 +29,10 @@ public:
    // Call this to shutdown the loop 
    void shutdown();
 
-   bool checkSkew(DronePlot dp);
+   void checkSkew();
    void correctSkew();
    void deduplicate();
+   void erasePlots();
 
    // An adjusted time that accounts for "time_mult", which speeds up the clock. Any
    // attempts to check "simulator time" should use this function
@@ -69,6 +70,7 @@ private:
    unsigned short _port;
 
    std::map<unsigned int, unsigned int> _skew;
+   std::vector<std::list<DronePlot>::iterator> _toErase;
 };
 
 

@@ -113,11 +113,12 @@ void ReplServer::replicate() {
 
       //sort through database, check for skew and duplicates here
       _plotdb.sortByTime();
-      //bool run = checkSkew();
-      //while(!run){run = checkSkew();}
+
+      checkSkew();
       correctSkew();
-      //run = deduplicate();
-      //while(!run){run = deduplicate();}
+      deduplicate();
+
+      
 
       usleep(1000);
    }   
@@ -144,7 +145,7 @@ unsigned int ReplServer::queueNewPlots() {
    for ( ; dpit != _plotdb.end(); dpit++) {
 
       // If this is a new one, marshall it and clear the flag
-      if (dpit->isFlagSet(DBFLAG_NEW) && !checkSkew(*dpit)) {
+      if (dpit->isFlagSet(DBFLAG_NEW)) {
          
          
          dpit->serialize(marshall_data);
@@ -230,11 +231,11 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
 
    tmp_plot.deserialize(data);
    
-   if(!checkSkew(tmp_plot)){
+   
 
       _plotdb.addPlot(tmp_plot.drone_id, tmp_plot.node_id, tmp_plot.timestamp, tmp_plot.latitude,
                                                          tmp_plot.longitude);
-   }
+   
 }
 
 
@@ -245,56 +246,51 @@ void ReplServer::shutdown() {
 
 //check for time skew and map skew to node_id
 //return true if duplicate, false otherwise
-bool ReplServer::checkSkew(DronePlot j){
+void ReplServer::checkSkew(){
      
-   auto priorityOrder = _queue.getLeader();
+   auto leader = _queue.getLeader();
+   auto leader_id = leader.front();
 
-   for(auto i = _plotdb.begin(); i != _plotdb.end(); i++)
-   {
-         if(priorityOrder.front() == ("ds" + std::to_string(i->node_id)))
+      for(auto i = _plotdb.begin(); i != _plotdb.end(); i++)
+      {
+         if(leader.front() == ("ds" + std::to_string(i->node_id)))
          {
            i->setFlags(DBFLAG_LEADER);
-         
          }
 
-            
-            if(priorityOrder.front() == ("ds" + std::to_string(j.node_id)))
+         for(auto j = _plotdb.begin(); j != _plotdb.end(); j++)
+         {
+            if(leader.front() == ("ds" + std::to_string(j->node_id)))
             {
-               j.setFlags(DBFLAG_LEADER);
+               j->setFlags(DBFLAG_LEADER);
             }
             
-            if((i->latitude == j.latitude) && (i->longitude == j.longitude))
+
+            //check for skew BEFORE checking for matching time
+
+            if((i->latitude == j->latitude) && (i->longitude == j->longitude))
             {
-               if(i->timestamp != j.timestamp)//same place, different time -- calculate skew if possible
+               if(i->isFlagSet(DBFLAG_LEADER))
                {
-                  if((_skew.find(i->node_id) != _skew.end()) && (_skew.find(j.node_id) == _skew.end()))//skew calcd for one and not the other, calc skew using other skew
-                  {
-                     _skew.emplace(j.node_id,((_skew[i->node_id] + i->timestamp) - j.timestamp));
-                  }
-                  else if((_skew.find(i->node_id) == _skew.end()) && (_skew.find(j.node_id) != _skew.end()))
-                  {
-                     _skew.emplace(i->node_id,((_skew[j.node_id] + j.timestamp) - i->timestamp));
-                  }
-                  else if(i->isFlagSet(DBFLAG_LEADER))//one is leader, calc skew using leader
-                  {
-                     _skew.emplace(j.node_id,(i->timestamp - j.timestamp));
-                  }
-                  else if(j.isFlagSet(DBFLAG_LEADER))
-                  {
-                     _skew.emplace(i->node_id,(j.timestamp - i->timestamp));
-                  }
-                  
+                  _skew.emplace(j->node_id,(i->timestamp - j->timestamp));
+                  j->setFlags(DBFLAG_SKEWED);
                }
-               else //same place, same time -- duplicate
+               else if(j->isFlagSet(DBFLAG_LEADER))
                {
-                 return true;
+                  _skew.emplace(i->node_id,(j->timestamp - i->timestamp));
+                  i->setFlags(DBFLAG_SKEWED);
                }
-               
+               else if(_skew.find(i->node_id) != _skew.end())
+               {
+                  _skew.emplace(j->node_id,((_skew[i->node_id] + i->timestamp) - j->timestamp));
+               }
+               else if(_skew.find(j->node_id) != _skew.end())
+               {
+                  _skew.emplace(i->node_id,((_skew[j->node_id] + j->timestamp) - i->timestamp));
+               }
             }
-            
-         
-   }
-   return false;
+         }
+      }
 }
 
 //iterate through database, if node is skewed, fix time
@@ -323,29 +319,42 @@ void ReplServer::deduplicate(){
    for(auto i = _plotdb.begin(); i != _plotdb.end(); i++)
    {
 
-      for(auto j = i++; j != _plotdb.end(); j++)
+      for(auto j = _plotdb.begin(); j != _plotdb.end(); j++)
       {
+         if(i != j){
          if(i->timestamp == j->timestamp) //if point is duplicate, delete lower priority
          {
             for(auto it = priorityOrder.begin(); it != priorityOrder.end(); it++)
             {
                if(*it == ("ds" + std::to_string(i->node_id)))
                {
-                  _plotdb.erase(j);
+                  _toErase.push_back(j);
                   
                }
                else if(*it == ("ds" + std::to_string(j->node_id)))
                {
-                 _plotdb.erase(i);
+                 _toErase.push_back(i);
                   
                }
             }
          }
-        
+         }
          
       }
       
    }
 
+   erasePlots();
    
+}
+
+void ReplServer::erasePlots(){
+
+   for(auto i = _toErase.begin(); i != _toErase.end(); i++)
+   {
+      _plotdb.erase(*i);
+   }
+
+   _toErase.clear();
+
 }

@@ -15,7 +15,7 @@
 #define DBFLAG_SYNCD    0x2   // Has been sync'd
 #define DBFLAG_DUPE    0x4   // Skew has been calculated
 #define DBFLAG_LEADER    0x8   // Is time coordinator
-#define DBFLAG_USER3    0x16  // Change as needed
+#define DBFLAG_SKEWED    0x16  // Change as needed
 #define DBFLAG_USER4    0x32
 
 // Manages the drone plot database for a particular node.
