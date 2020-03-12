@@ -264,42 +264,42 @@ void ReplServer::checkSkew(){
             {
                j->setFlags(DBFLAG_LEADER);
             }
-            else if(!i->isFlagSet(DBFLAG_LEADER))
+            /*else if(!i->isFlagSet(DBFLAG_LEADER))
             {
                for(int it = 0; it != leader.size(); it++)
                {
                   if(leader.at(it) == ("ds" + std::to_string(j->node_id)))
                   {
-                     j->setFlags(DBFLAG_LEADER);
+                     j->setFlags(DBFLAG_LEADER); //priorty != leader
                      it = leader.size() + 1;
                   }
                   else if(leader.at(it) ==("ds" + std::to_string(i->node_id)))
                   {
-                     i->setFlags(DBFLAG_LEADER);
+                     i->setFlags(DBFLAG_LEADER); //priority != leader
                      it = leader.size() + 1;
 
                   }
                }
-            }
+            }*/
 
             if((i != j) && (i->latitude == j->latitude) && (i->longitude == j->longitude) && (i->drone_id == j->drone_id))
             {
-               if(i->isFlagSet(DBFLAG_LEADER))
+               if(i->isFlagSet(DBFLAG_LEADER) && !j->isFlagSet(DBFLAG_SYNCD))
                {
                   _skew.emplace(j->node_id,(i->timestamp - j->timestamp));
                   j->setFlags(DBFLAG_SKEWED);
                }
-               else if(j->isFlagSet(DBFLAG_LEADER))
+               else if(j->isFlagSet(DBFLAG_LEADER) && !i->isFlagSet(DBFLAG_SYNCD))
                {
                   _skew.emplace(i->node_id,(j->timestamp - i->timestamp));
                   i->setFlags(DBFLAG_SKEWED);
                }
-               else if(_skew.find(i->node_id) != _skew.end())
+               else if(_skew.find(i->node_id) != _skew.end() && !j->isFlagSet(DBFLAG_SYNCD)) 
                {
                   _skew.emplace(j->node_id,((_skew[i->node_id] + i->timestamp) - j->timestamp));
                   j->setFlags(DBFLAG_SKEWED);
                }
-               else if(_skew.find(j->node_id) != _skew.end())
+               else if(_skew.find(j->node_id) != _skew.end() && !i->isFlagSet(DBFLAG_SYNCD))
                {
                   _skew.emplace(i->node_id,((_skew[j->node_id] + j->timestamp) - i->timestamp));
                   i->setFlags(DBFLAG_SKEWED);
@@ -324,6 +324,7 @@ void ReplServer::correctSkew(){
          
          i->timestamp += _skew[i->node_id];
          i->setFlags(DBFLAG_SYNCD);
+         i->clrFlags(DBFLAG_SKEWED);
             
       }
    }
